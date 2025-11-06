@@ -1,8 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const router = express.Router();
-const JWT = require('jsonwebtoken');
-
+const { registerValidation, loginValidation } = require('../validation/userValidation');
 // Schema
 const User = require('../model/userModel');
 
@@ -11,7 +10,12 @@ const User = require('../model/userModel');
 router.post('/register', async (req, res) => {
     
     try {
-        
+        // Validating the user for register
+        const { error } = registerValidation.validate(req.body);
+        if(error) {
+            return res.status(400).json({ error: 'Input validation error...' })
+        }
+
         const { name , email, password } = req.body;
 
         // Check first before creating
@@ -27,7 +31,7 @@ router.post('/register', async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
         
-        // Creating new user
+        // Creating a new user
         await User.create({
             name,
             email,
@@ -48,6 +52,13 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => { 
     try {
         
+        // Validating the user before login
+        const { error } = loginValidation.validate(req.body);
+
+        if(error) {
+            return res.status(400).json({ error: 'Login Invalid.' })
+        }
+
         const { email, password } = req.body;
 
         // Check if email exist
